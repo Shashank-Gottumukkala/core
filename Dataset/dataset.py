@@ -1,13 +1,19 @@
 import os
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 from matplotlib import pyplot as plt
 
-class Dataset(object):
-    def __init__(self, batch_size = 32, alb_transforms = True, shuffle = True):
+class Dataset(ABC):
+    mean = None
+    std = None
+    classes = None
+    DataSet = None
+    default_alb_transforms = None
+
+    def __init__(self, batch_size = 32, alb_transforms = None, shuffle = True):
         self.batch_size = batch_size
-        self.alb_transforms = alb_transforms
+        self.alb_transforms = alb_transforms or self.default_alb_transforms
         self.shuffle = shuffle
         self.loader_kwargs = {'batch_size': batch_size, 'pin_count': os.cpu_count(), 'pin_memory': True}
         self.train_transforms = self.get_train_transforms()
@@ -53,7 +59,7 @@ class Dataset(object):
             plt.tight_layout()
             image = batch_data[i]
             if denorm:
-                image = self.denormalise(image)
+                image = self.denormalize(image)
             plt.imshow(self.show_transform(image), cmap='gray')
             label = batch_label[i].item()
             if self.classes is not None:
