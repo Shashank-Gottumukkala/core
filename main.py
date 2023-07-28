@@ -21,17 +21,18 @@ def print_summary(model_):
     print(model_summary(model_, input_size=(batch_size, 3, 32, 32)))
 
 
-def create_experiment(model_, dataset, criterion, epochs, scheduler, optimizer):
-    return Experiment(model_, dataset, criterion=criterion, epochs=epochs, scheduler=scheduler, optimizer=optimizer)
+def create_experiment(model_, dataset, criterion, epochs, scheduler):
+    return Experiment(model_, dataset, criterion=criterion, epochs=epochs, scheduler=scheduler)
 
 
-def main(criterion='crossentropy', epochs=20, scheduler='one_cycle', optimizer= 'SGD'):
-    experiment = create_experiment(criterion=criterion, epochs=epochs, scheduler=scheduler, optimizer=optimizer)
+def main(criterion='crossentropy', epochs=20, scheduler='one_cycle'):
+    experiment = create_experiment(criterion=criterion, epochs=epochs, scheduler=scheduler)
     experiment.execute()
     experiment.train.plot_stats()
     experiment.test.plot_stats()
     experiment.show_incorrect()
     experiment.show_incorrect(cams=True)
+
 
 
 if __name__ == '__main__':
