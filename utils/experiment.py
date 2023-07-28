@@ -13,30 +13,21 @@ from pytorch_grad_cam.utils.image import show_cam_on_image
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 
 class Experiment(object):
-
     criterions = {
         'nll': nn.NLLLoss,
         'crossentropy': nn.CrossEntropyLoss
-                  }
-    
+    }
 
-    def __init__(self, model, dataset, criterion='crossentropy', epochs = 20, lr = 1e-3, optimizer = 'SGD', scheduler = 'one_cycle_lr'):
+    def __init__(self, model, dataset, criterion='crossentropy', epochs=20, lr=0.01, scheduler='one_cycle'):
         self.device = get_device()
         self.model = model.to(self.device)
         self.dataset = dataset
         self.criterion = self.criterions.get(criterion, nn.CrossEntropyLoss)()
         self.epochs = epochs
-
-        if optimizer == 'SGD':
-            self.optimizer = optim.SGD(self.model.parameters(), lr= lr, momentum= 0.9)
-        elif optimizer == 'ADAM':
-            self.optimizer = optim.Adam(self.model.parameters(), lr=lr, weight_decay= 1e-2)
-        else:
-            return print('Select an Optimizer')
-
-        if scheduler == 'one_cycle_lr':
+        self.optimizer = optim.SGD(model.parameters(), momentum=0.9, lr=lr)
+        if scheduler == 'one_cycle':
             self.best_lr = self.find_lr()
-            self.scheduler = OneCycleLR(
+            self.scheduler = optim.lr_scheduler.OneCycleLR(
                 self.optimizer,
                 max_lr=self.best_lr,
                 steps_per_epoch=len(self.dataset.train_loader),
@@ -45,24 +36,25 @@ class Experiment(object):
                 div_factor=100,
                 three_phase=False,
                 final_div_factor=100,
-                anneal_strategy='linear')
+                anneal_strategy='linear'
+            )
             perform_step = True
-
         else:
             self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=1, verbose=True, factor=0.1)
             perform_step = False
-        self.train = Train(self.model, dataset, self.criterion, self.optimizer, scheduler=self.scheduler, perform_step=perform_step)
+        self.train = Train(self.model, dataset, self.criterion, self.optimizer, scheduler=self.scheduler,
+                           perform_step=perform_step)
         self.test = Test(self.model, dataset, self.criterion)
         self.incorrect_preds = None
         self.grad_cam = None
 
     def find_lr(self):
         lr_finder = LRFinder(self.model, self.optimizer, self.criterion, device=self.device)
-        lr_finder.range_test(self.dataset.train_loader, start_lr=1e-5, end_lr= 0.1, num_iter=100, step_mode='exp')
-        _, best_lr = lr_finder.plot() 
+        lr_finder.range_test(self.dataset.train_loader, start_lr=1e-5, end_lr=0.1, num_iter=100, step_mode='exp')
+        _, best_lr = lr_finder.plot()  
         lr_finder.reset()  
-        return best_lr    
-    
+        return best_lr
+
     def execute(self, target=None):
         target_count = 0
         for epoch in range(1, self.epochs + 1):
@@ -72,7 +64,7 @@ class Experiment(object):
             if target is not None and test_acc >= target:
                 target_count += 1
                 if target_count >= 3:
-                    print("Target accuracy reached. Stopping Training.")
+                    print("Target Validation accuracy achieved thrice. Stopping Training.")
                     break
 
     def get_incorrect_preds(self):
@@ -118,5 +110,3 @@ class Experiment(object):
             labels.append(label)
 
         plot_examples(images, labels, figsize=(10, 8))
-
-        
