@@ -1,5 +1,5 @@
 try:
-    from utils import set_seed, model_summary
+    from core.utils import set_seed, model_summary
     from utils.experiment import Experiment
     from models.resnet import ResNet18
     from Dataset import CIFAR10
