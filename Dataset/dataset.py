@@ -1,8 +1,15 @@
 import os
-from abc import ABC, abstractmethod
+from abc import ABC
+
+import torch
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
-from matplotlib import pyplot as plt
+
+try:
+    from core.utils import plot_examples
+except ModuleNotFoundError:
+    from utils import plot_examples
+
 
 class Dataset(ABC):
     mean = None
@@ -11,59 +18,77 @@ class Dataset(ABC):
     DataSet = None
     default_alb_transforms = None
 
-    def __init__(self, batch_size = 32, alb_transforms = None, shuffle = True):
+    def __init__(self, batch_size=1, normalize=True, shuffle=True, augment=True, alb_transforms=None):
         self.batch_size = batch_size
-        self.alb_transforms = alb_transforms or self.default_alb_transforms
+        self.normalize = normalize
         self.shuffle = shuffle
-        self.loader_kwargs = {'batch_size': batch_size, 'pin_count': os.cpu_count(), 'pin_memory': True}
+        self.augment = augment
+        self.alb_transforms = alb_transforms or self.default_alb_transforms
+
+        self.loader_kwargs = {'batch_size': batch_size, 'num_workers': os.cpu_count(), 'pin_memory': True}
         self.train_transforms = self.get_train_transforms()
         self.test_transforms = self.get_test_transforms()
         self.train_loader = self.get_train_loader()
         self.test_loader = self.get_test_loader()
+        self.example_iter = iter(self.train_loader)
 
     def get_train_transforms(self):
-        all_transforms = [A.Normalize(self.mean, self.std)]
-        if self.alb_transforms is not None:
-            all_transforms += self.alb_transforms
+        all_transforms = list()
+        if self.normalize:
+            all_transforms.append(A.Normalize(self.mean, self.std))
+        if self.augment and self.alb_transforms is not None:
+            all_transforms.extend(self.alb_transforms)
         all_transforms.append(ToTensorV2())
         return A.Compose(all_transforms)
-    
+
     def get_test_transforms(self):
-        all_transforms = [A.Normalize(self.mean, self.std), ToTensorV2()]
+        all_transforms = list()
+        if self.normalize:
+            all_transforms.append(A.Normalize(self.mean, self.std))
+        all_transforms.append(ToTensorV2())
         return A.Compose(all_transforms)
-    
-    @abstractmethod
+
     def get_train_loader(self):
-        pass
+        train_data = self.DataSet('../data', train=True, download=True, alb_transform=self.train_transforms)
+        if self.classes is None:
+            self.classes = {i: c for i, c in enumerate(train_data.classes)}
+        self.train_loader = torch.utils.data.DataLoader(train_data, shuffle=self.shuffle, **self.loader_kwargs)
+        return self.train_loader
 
-    @abstractmethod
     def get_test_loader(self):
-        pass
+        test_data = self.DataSet('../data', train=False, download=True, alb_transform=self.test_transforms)
+        self.test_loader = torch.utils.data.DataLoader(test_data, shuffle=False, **self.loader_kwargs)
+        return self.test_loader
 
-    @classmethod
-    def denormalize(cls, tensor):
-        for t,m,s, in zip(tensor, cls.mean, cls.std):
-            t.mul_(s).add_(m)
-        return tensor
-    
-    @abstractmethod
+    def denormalise(self, tensor):
+        result = torch.tensor(tensor, requires_grad=False)
+        if self.normalize:
+            for t, m, s in zip(result, self.mean, self.std):
+                t.mul_(s).add_(m)
+        return result
+
     def show_transform(self, img):
-        pass
+        if self.normalize:
+            img = self.denormalise(img)
+        if len(self.mean) == 3:
+            return img.permute(1, 2, 0)
+        else:
+            return img.squeeze(0)
 
-    def show_examples(self, figsize=None, denorm=True):
+    def show_examples(self, figsize=(8, 6)):
         batch_data, batch_label = next(self.example_iter)
+        images = list()
+        labels = list()
 
-        _ = plt.figure(figsize=figsize)
-        for i in range(12):
-            plt.subplot(3, 4, i + 1)
-            plt.tight_layout()
+        for i in range(len(batch_data)):
             image = batch_data[i]
-            if denorm:
-                image = self.denormalize(image)
-            plt.imshow(self.show_transform(image), cmap='gray')
+            image = self.show_transform(image)
+
             label = batch_label[i].item()
             if self.classes is not None:
                 label = f'{label}:{self.classes[label]}'
-            plt.title(str(label))
-            plt.xticks([])
-            plt.yticks([])
+
+            images.append(image)
+            labels.append(label)
+
+        plot_examples(images, labels, figsize=figsize)

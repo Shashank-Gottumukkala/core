@@ -6,14 +6,14 @@ from torchvision import datasets
 import albumentations as A
 
 class AlbCIFAR10(datasets.CIFAR10):
-    def __init__(self, root, alb_transform = None, **kwargs):
+    def __init__(self, root, alb_transform=None, **kwargs):
         super(AlbCIFAR10, self).__init__(root, **kwargs)
         self.alb_transform = alb_transform
 
     def __getitem__(self, index):
         image, label = super(AlbCIFAR10, self).__getitem__(index)
         if self.alb_transform is not None:
-            image = self.alb_transform(image = np.array(image))['image']
+            image = self.alb_transform(image=np.array(image))['image']
         return image, label
     
 class CIFAR10(Dataset):
