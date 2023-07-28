@@ -1,8 +1,8 @@
 try:
     from core.utils import set_seed, model_summary
-    from utils.experiment import Experiment
-    from models.resnet import ResNet18
-    from Dataset import CIFAR10
+    from core.utils.experiment import Experiment
+    from core.models.resnet import ResNet18
+    from core.Dataset import CIFAR10
 except ModuleNotFoundError:
     from utils.get_device import set_seed, model_summary
     from utils.experiment import Experiment
