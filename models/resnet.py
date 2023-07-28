@@ -64,9 +64,9 @@ class ResNet(nn.Module):
         out = self.linear(out)
         return out
     
-    def ResNet18():
-        return ResNet(ConvBlock, [2, 2, 2, 2])
+def ResNet18():
+    return ResNet(ConvBlock, [2, 2, 2, 2])
 
 
-    def ResNet34():
-        return ResNet(ConvBlock, [3, 4, 6, 3]) 
+def ResNet34():
+    return ResNet(ConvBlock, [3, 4, 6, 3]) 
