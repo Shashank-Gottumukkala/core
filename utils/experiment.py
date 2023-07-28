@@ -13,13 +13,18 @@ from pytorch_grad_cam.utils.image import show_cam_on_image
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 
 class Experiment(object):
+
+    criterions = {
+        'nll': nn.NLLLoss,
+        'crossentropy': nn.CrossEntropyLoss
+                  }
     
 
-    def __init__(self, model, dataset, criterion = None, epochs = 20, lr = 1e-3, optimizer = 'SGD', scheduler = 'one_cycle_lr'):
+    def __init__(self, model, dataset, criterion='crossentropy', epochs = 20, lr = 1e-3, optimizer = 'SGD', scheduler = 'one_cycle_lr'):
         self.device = get_device()
         self.model = model.to(self.device)
         self.dataset = dataset
-        self.criterion = criterion or nn.CrossEntropyLoss()
+        self.criterion = self.criterions.get(criterion, nn.CrossEntropyLoss)()
         self.epochs = epochs
 
         if optimizer == 'SGD':
