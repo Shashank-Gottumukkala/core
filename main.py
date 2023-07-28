@@ -1,13 +1,13 @@
 try:
-    from utils import set_seed, model_summary
-    from utils.experiment import Experiment
-    from models.resnet import ResNet18
-    from Dataset import CIFAR10
+    from .utils import set_seed, model_summary
+    from .utils.experiment import Experiment
+    from .models.resnet import ResNet18
+    from .Dataset import CIFAR10
 except ModuleNotFoundError:
     from utils.get_device import set_seed, model_summary
     from utils.experiment import Experiment
     from models import *
-    from datasets import *
+    from Dataset import *
 
 set_seed(42)
 batch_size = 32
