@@ -26,6 +26,7 @@ class CIFAR10(Dataset):
         A.PadIfNeeded(40, 40, p=1),
         A.RandomCrop(32, 32, p=1),
         A.CoarseDropout(max_holes=1, max_height=16, max_width=16, fill_value=0, p=1),
+        A.PadIfNeeded(64, 64, border_mode=cv2.BORDER_CONSTANT, value=0, p=1),
         A.CenterCrop(32, 32, p=1) 
     ]
 
