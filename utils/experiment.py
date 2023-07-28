@@ -13,6 +13,7 @@ from pytorch_grad_cam.utils.image import show_cam_on_image
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 
 class Experiment(object):
+    
 
     def __init__(self, model, dataset, criterion = None, epochs = 20, lr = 1e-3, optimizer = 'SGD', scheduler = 'one_cycle_lr'):
         self.device = get_device()
@@ -23,8 +24,10 @@ class Experiment(object):
 
         if optimizer == 'SGD':
             self.optimizer = optim.SGD(self.model.parameters(), lr= lr, momentum= 0.9)
-        else:
+        elif optimizer == 'ADAM':
             self.optimizer = optim.Adam(self.model.parameters(), lr=lr, weight_decay= 1e-2)
+        else:
+            return print('Select an Optimizer')
 
         if scheduler == 'one_cycle_lr':
             self.best_lr = self.find_lr()

@@ -4,8 +4,6 @@ from matplotlib import pyplot as plt
 
 from .get_device import get_device
 
-# torch.autograd.set_detect_anomaly(True)
-
 
 def get_correct_count(prediction, labels):
     return prediction.argmax(dim=1).eq(labels).sum().item()

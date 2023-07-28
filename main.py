@@ -11,7 +11,7 @@ except ModuleNotFoundError:
 
 
 set_seed(42)
-batch_size = 32
+batch_size = 64
 
 cifar10 = CIFAR10(batch_size)
 model = ResNet18()
@@ -21,12 +21,12 @@ def print_summary(model_):
     print(model_summary(model_, input_size=(batch_size, 3, 32, 32)))
 
 
-def create_experiment(model_, dataset, criterion, epochs, scheduler, optimizer):
-    return Experiment(model_, dataset, criterion=criterion, epochs=epochs, scheduler=scheduler, optimizer=optimizer)
+def create_experiment(model_, dataset, epochs, scheduler, optimizer):
+    return Experiment(model_, dataset, epochs=epochs, scheduler=scheduler, optimizer=optimizer)
 
 
-def main(criterion='crossentropy', epochs=20, scheduler='one_cycle', optimizer = 'SGD'):
-    experiment = create_experiment(criterion=criterion, epochs=epochs, scheduler=scheduler, optimizer=optimizer)
+def main(epochs=20, scheduler='one_cycle', optimizer = 'SGD'):
+    experiment = create_experiment(epochs=epochs, scheduler=scheduler, optimizer=optimizer)
     experiment.execute()
     experiment.train.plot_stats()
     experiment.test.plot_stats()
